@@ -1,0 +1,20 @@
+{
+  "profiles": {
+    "Topology4.BillingRouter": {
+      "commandName": "Project"
+    },
+    "Duplicating backplane": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "CentralRouting_Sample_DuplicateOnBackplane": "true"
+      }
+    },
+    "Duplicating backplane, no deduplication": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "CentralRouting_Sample_DuplicateOnBackplane": "true",
+        "CentralRouting_Sample_Deduplication": "false"
+      }
+    }
+  }
+}

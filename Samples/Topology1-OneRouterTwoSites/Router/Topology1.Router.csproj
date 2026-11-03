@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Router</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.Transport.SqlServer" Version="9.1.1" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\CentralRouting.Router.SqlServer\CentralRouting.Router.SqlServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\SqlServerSite.cs" Link="Shared\SqlServerSite.cs" />
+    <Compile Include="..\Shared\AzureServiceBusSite.cs" Link="Shared\AzureServiceBusSite.cs" />
+  </ItemGroup>
+
+</Project>

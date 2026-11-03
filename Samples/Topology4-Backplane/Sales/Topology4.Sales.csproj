@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Sales</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.Transport.SqlServer" Version="9.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\CentralRouting.NServiceBus\CentralRouting.NServiceBus.csproj" />
+    <ProjectReference Include="..\Messages\Topology4.Messages.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- New host ID algorithm; the sample has no older instances to stay compatible with -->
+    <RuntimeHostConfigurationOption Include="NServiceBus.Core.Hosting.UseV2DeterministicGuid" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\SampleEndpoint.cs" Link="Shared\SampleEndpoint.cs" />
+    <Compile Include="..\Shared\SqlServerDatabase.cs" Link="Shared\SqlServerDatabase.cs" />
+    <Compile Include="..\Shared\Parts.cs" Link="Shared\Parts.cs" />
+    <Compile Include="..\Shared\PartEndpoint.cs" Link="Shared\PartEndpoint.cs" />
+    <Compile Include="..\Shared\Services\SalesService.cs" Link="Shared\SalesService.cs" />
+  </ItemGroup>
+
+</Project>

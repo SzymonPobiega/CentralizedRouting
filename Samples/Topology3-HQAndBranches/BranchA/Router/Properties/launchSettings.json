@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Topology3.BranchA.Router": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:50652;http://localhost:50653"
+    }
+  }
+}

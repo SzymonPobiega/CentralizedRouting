@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Website</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.RabbitMQ" Version="11.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\CentralRouting.NServiceBus\CentralRouting.NServiceBus.csproj" />
+    <ProjectReference Include="..\Messages\Topology2.Messages.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- New host ID algorithm; the sample has no older instances to stay compatible with -->
+    <RuntimeHostConfigurationOption Include="NServiceBus.Core.Hosting.UseV2DeterministicGuid" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\SampleEndpoint.cs" Link="Shared\SampleEndpoint.cs" />
+    <Compile Include="..\Shared\RabbitMQBroker.cs" Link="Shared\RabbitMQBroker.cs" />
+    <Compile Include="..\Shared\Sites.cs" Link="Shared\Sites.cs" />
+    <Compile Include="..\Shared\ServiceEndpoint.cs" Link="Shared\ServiceEndpoint.cs" />
+    <Compile Include="..\Shared\Services\WebsiteService.cs" Link="Shared\WebsiteService.cs" />
+  </ItemGroup>
+
+</Project>

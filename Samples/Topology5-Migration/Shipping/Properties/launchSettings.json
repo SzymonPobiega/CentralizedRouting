@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "rabbit": {
+      "commandName": "Project",
+      "commandLineArgs": "--site rabbit"
+    },
+    "azure": {
+      "commandName": "Project",
+      "commandLineArgs": "--site azure"
+    }
+  }
+}

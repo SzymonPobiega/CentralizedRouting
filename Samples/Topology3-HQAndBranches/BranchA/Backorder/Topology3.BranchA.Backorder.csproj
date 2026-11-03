@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Backorder</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.RabbitMQ" Version="11.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\CentralRouting.NServiceBus\CentralRouting.NServiceBus.csproj" />
+    <ProjectReference Include="..\..\Messages\Topology3.Messages.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- New host ID algorithm; the sample has no older instances to stay compatible with -->
+    <RuntimeHostConfigurationOption Include="NServiceBus.Core.Hosting.UseV2DeterministicGuid" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Shared\SampleEndpoint.cs" Link="Shared\SampleEndpoint.cs" />
+    <Compile Include="..\..\Shared\RabbitMQBroker.cs" Link="Shared\RabbitMQBroker.cs" />
+    <Compile Include="..\..\Shared\Sites.cs" Link="Shared\Sites.cs" />
+    <Compile Include="..\..\Shared\Branch.cs" Link="Shared\Branch.cs" />
+    <Compile Include="..\..\Shared\BranchEndpoint.cs" Link="Shared\BranchEndpoint.cs" />
+    <Compile Include="..\..\Shared\BackorderService.cs" Link="Shared\BackorderService.cs" />
+  </ItemGroup>
+
+</Project>

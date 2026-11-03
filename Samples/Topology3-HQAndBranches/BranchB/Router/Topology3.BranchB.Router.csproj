@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>BranchBRouter</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.RabbitMQ" Version="11.2.1" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\CentralRouting.Router.SqlServer\CentralRouting.Router.SqlServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Shared\AzureServiceBusNamespace.cs" Link="Shared\AzureServiceBusNamespace.cs" />
+    <Compile Include="..\..\Shared\RabbitMQBroker.cs" Link="Shared\RabbitMQBroker.cs" />
+    <Compile Include="..\..\Shared\Sites.cs" Link="Shared\Sites.cs" />
+    <Compile Include="..\..\Shared\Branch.cs" Link="Shared\Branch.cs" />
+    <Compile Include="..\..\Shared\BranchRouter.cs" Link="Shared\BranchRouter.cs" />
+  </ItemGroup>
+
+</Project>
