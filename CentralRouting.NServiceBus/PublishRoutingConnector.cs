@@ -8,7 +8,6 @@ using NServiceBus.Extensibility;
 using NServiceBus.Logging;
 using NServiceBus.Pipeline;
 using NServiceBus.Routing;
-using NServiceBus.Unicast.Messages;
 
 namespace CentralRouting.NServiceBus
 {
@@ -21,13 +20,11 @@ namespace CentralRouting.NServiceBus
         static readonly ILog log = LogManager.GetLogger<PublishRoutingConnector>();
 
         readonly RoutingTable routingTable;
-        readonly MessageMetadataRegistry metadataRegistry;
         readonly string endpointName;
 
-        public PublishRoutingConnector(RoutingTable routingTable, MessageMetadataRegistry metadataRegistry, string endpointName)
+        public PublishRoutingConnector(RoutingTable routingTable, string endpointName)
         {
             this.routingTable = routingTable;
-            this.metadataRegistry = metadataRegistry;
             this.endpointName = endpointName;
         }
 
@@ -42,8 +39,7 @@ namespace CentralRouting.NServiceBus
                 throw new Exception($"Endpoint {endpointName} cannot publish {eventType.FullName}. Its only publisher is {route.Publisher}.");
             }
 
-            var enclosedTypes = metadataRegistry.GetMessageMetadata(eventType).MessageHierarchy.Select(t => t.FullName).ToList();
-            var targets = table.Resolver.ResolveEvent(enclosedTypes, table.LocalSite);
+            var targets = table.Resolver.ResolveEvent(eventType.FullName, table.LocalSite);
 
             var addresses = new HashSet<string>();
             foreach (var target in targets)
@@ -52,7 +48,7 @@ namespace CentralRouting.NServiceBus
             }
 
             //Routers of other sites hold a grant for the event: one copy to this endpoint's router, which forwards it
-            if (enclosedTypes.Any(t => table.Resolver.GetEventRoute(t)?.Forward == true))
+            if (route?.Forward == true)
             {
                 addresses.Add(table.GetRouterAddress());
             }

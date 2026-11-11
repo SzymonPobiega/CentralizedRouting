@@ -76,17 +76,36 @@ namespace CentralRouting.Tests
                     ["Remote"] = new EndpointInfo { Policy = AddressPolicy.Strict, Addresses = { ["b"] = Queues(("Remote", 1)) } },
                     ["Branches"] = new EndpointInfo { Policy = AddressPolicy.Explicit, Addresses = { ["a"] = Queues(("Branches", 1)), ["b"] = Queues(("Branches", 1)) } }
                 },
-                Events = { ["Base"] = new EventRoute { Subscribers = { "Local", "Branches" } }, ["Derived"] = new EventRoute { Subscribers = { "Remote" } } }
+                Events = { ["OrderPlaced"] = new EventRoute { Subscribers = { "Local", "Remote", "Branches" } } }
             };
             var resolver = new AddressResolver(document);
 
-            var targets = resolver.ResolveEvent(new[] { "Derived", "Base" }, "a");
+            var targets = resolver.ResolveEvent("OrderPlaced", "a");
 
             Assert.That(targets, Is.EquivalentTo(new[]
             {
                 new Destination("Local", "a"),
                 new Destination("Remote", "b")
             }), "Each site of an Explicit endpoint is a separate destination, which an event can't address");
+        }
+
+        [Test]
+        public void Subscribers_of_a_base_type_do_not_receive_derived_events()
+        {
+            var document = new RoutingDocument
+            {
+                Endpoints =
+                {
+                    ["Billing"] = new EndpointInfo { Policy = AddressPolicy.Strict, Addresses = { ["a"] = Queues(("Billing", 1)) } },
+                    ["Audit"] = new EndpointInfo { Policy = AddressPolicy.Strict, Addresses = { ["a"] = Queues(("Audit", 1)) } }
+                },
+                Events = { ["OrderEvent"] = new EventRoute { Subscribers = { "Audit" } }, ["OrderPlaced"] = new EventRoute { Subscribers = { "Billing" } } }
+            };
+            var resolver = new AddressResolver(document);
+
+            Assert.That(resolver.ResolveEvent("OrderPlaced", "a"), Is.EquivalentTo(new[] { new Destination("Billing", "a") }),
+                "Subscribers are assigned to the published type; a handler of OrderEvent only makes Audit capable of OrderPlaced");
+            Assert.That(resolver.ResolveEvent("Unrouted", "a"), Is.Empty);
         }
 
         static AddressResolver Resolver(AddressPolicy policy, Dictionary<string, Dictionary<string, int>> addresses)

@@ -123,16 +123,16 @@ namespace CentralRouting.Model
         /// Returns the subscribers of an event and the site each should receive it on.
         /// The publisher delivers to targets on its own site and sends one copy to its router for all others.
         /// The router, called with the site the copy arrived on, delivers to the targets on the other sites.
+        /// Only the published type's own route counts: subscribers are assigned to the type that is published, not to its
+        /// base types, so delivery never depends on the type hierarchy.
         /// Explicit endpoints are never targets: each of their sites is a separate business destination, which events
         /// can't address. Routers refuse such subscriptions, and validation reports any left over.
         /// </summary>
-        public IReadOnlyList<Destination> ResolveEvent(IEnumerable<string> enclosedTypes, string sourceSite)
+        public IReadOnlyList<Destination> ResolveEvent(string eventType, string sourceSite)
         {
-            var subscribers = enclosedTypes
-                .Where(t => Document.Events.ContainsKey(t))
-                .SelectMany(t => Document.Events[t].Subscribers)
-                .Distinct()
-                .OrderBy(s => s, StringComparer.Ordinal);
+            var subscribers = Document.Events.TryGetValue(eventType, out var route)
+                ? route.Subscribers.Distinct().OrderBy(s => s, StringComparer.Ordinal)
+                : Enumerable.Empty<string>();
 
             var targets = new List<Destination>();
             foreach (var subscriber in subscribers)

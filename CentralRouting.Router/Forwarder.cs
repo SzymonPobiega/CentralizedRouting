@@ -140,11 +140,11 @@ namespace CentralRouting.Router
         {
             var snapshot = snapshots.Current;
             var model = snapshot.Model;
-            var eventTypes = EnclosedTypes(headers).ToList();
+            var eventType = PublishedType(headers);
 
             var fromPeer = headers.TryGetValue(RoutingHeaders.OriginRouter, out var origin) && origin != configuration.Name;
 
-            var targets = snapshot.Resolver.ResolveEvent(eventTypes, incoming.SiteId)
+            var targets = snapshot.Resolver.ResolveEvent(eventType, incoming.SiteId)
                 .Where(t => fromPeer || t.Site != incoming.SiteId);
 
             foreach (var target in targets)
@@ -167,7 +167,7 @@ namespace CentralRouting.Router
                 return;
             }
 
-            foreach (var peer in model.GrantedPeers(eventTypes))
+            foreach (var peer in model.GrantedPeers(eventType))
             {
                 if (!model.Peers.TryGetValue(peer, out var peerRecord))
                 {
@@ -216,15 +216,17 @@ namespace CentralRouting.Router
             headers[Headers.ReplyToAddress] = outgoing.RouterAddress;
         }
 
-        static IEnumerable<string> EnclosedTypes(Dictionary<string, string> headers)
+        /// <summary>
+        /// The type the publisher published, which NServiceBus lists first in the enclosed message types, before its base types.
+        /// </summary>
+        static string PublishedType(Dictionary<string, string> headers)
         {
-            if (!headers.TryGetValue(Headers.EnclosedMessageTypes, out var enclosed))
+            if (!headers.TryGetValue(Headers.EnclosedMessageTypes, out var enclosed) || string.IsNullOrWhiteSpace(enclosed))
             {
                 throw new UnforwardableMessageException("The event has no enclosed message types header.");
             }
 
-            return enclosed.Split(';', StringSplitOptions.RemoveEmptyEntries)
-                .Select(t => t.Split(',')[0].Trim());
+            return enclosed.Split(';', StringSplitOptions.RemoveEmptyEntries)[0].Split(',')[0].Trim();
         }
     }
 }

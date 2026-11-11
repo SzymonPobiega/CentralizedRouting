@@ -35,7 +35,7 @@ namespace NServiceBus
                 sp => new SendRoutingConnector(routingTable, sp.GetService<ReceiveAddresses>(), sp.GetRequiredService<ITransportAddressResolver>(), endpointName),
                 "Routes commands with the central routing document");
             context.Pipeline.Replace(transport.SupportsPublishSubscribe ? "MulticastPublishRouterBehavior" : "UnicastPublishRouterConnector",
-                sp => new PublishRoutingConnector(routingTable, context.Settings.Get<MessageMetadataRegistry>(), endpointName),
+                sp => new PublishRoutingConnector(routingTable, endpointName),
                 "Routes events with the central routing document");
             context.Pipeline.Register(new PublishDeclarationBehavior(settings.PublishedTypes, endpointName), "Refuses to publish events the endpoint does not declare");
             context.Pipeline.Register(new ReplyToPropagationBehavior(), "Lets replies to messages that crossed sites find their way back");

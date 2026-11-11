@@ -124,6 +124,8 @@ endpointConfiguration.UseCentralRouting("Router", builder.Configuration).Publish
 
 The declaration is part of the capability report. When exactly one endpoint declares an event that has no publisher yet, the router assigns it as the publisher (`changedBy` is the router's name). When several endpoints declare it, when a peer already publishes it, or when this router requested it from a peer, the operator decides with `PUT /api/v1/routes/{type}/publisher`; validation reports the conflict (`PublisherConflict`) and a publisher that does not declare the event (`NotDeclared`). An endpoint throws when it publishes an event it does not declare, and when it publishes an event assigned to another endpoint.
 
+Subscribers are assigned to the type that is published, never to its base types. A handler of `IOrderEvent` makes an endpoint capable of `OrderPlaced`, so `routing types candidates Messages.OrderPlaced` lists it, but it receives `OrderPlaced` only once it subscribes to `OrderPlaced` itself. A new derived event reaches nobody until its subscribers are assigned.
+
 ### Migrating a publisher
 
 To replace a publisher, deploy the new endpoint next to the old one (both declare the event) and start a migration. Until it is completed, both may publish; subscribers are not affected.

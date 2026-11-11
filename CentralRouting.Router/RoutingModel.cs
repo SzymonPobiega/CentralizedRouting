@@ -394,13 +394,12 @@ namespace CentralRouting.Router
         }
 
         /// <summary>
-        /// Peers that hold a grant, or one being completed, for any of the given event types.
+        /// Peers that hold a grant, or one being completed, for the event type.
         /// </summary>
-        public IEnumerable<string> GrantedPeers(IEnumerable<string> eventTypes)
+        public IEnumerable<string> GrantedPeers(string eventType)
         {
-            var types = eventTypes.ToHashSet();
             return Requests
-                .Where(r => r.Direction == SubscriptionDirection.Incoming && r.Status != SubscriptionRequestStatus.Requested && types.Contains(r.MessageType))
+                .Where(r => r.Direction == SubscriptionDirection.Incoming && r.Status != SubscriptionRequestStatus.Requested && r.MessageType == eventType)
                 .Select(r => r.Peer)
                 .Distinct();
         }
@@ -510,7 +509,7 @@ namespace CentralRouting.Router
                         Publisher = route.Publisher,
                         PreviousPublisher = route.PreviousPublisher,
                         Subscribers = route.Subscribers.ToList(),
-                        Forward = GrantedPeers(new[] { route.MessageType }).Any()
+                        Forward = GrantedPeers(route.MessageType).Any()
                     };
                 }
             }
