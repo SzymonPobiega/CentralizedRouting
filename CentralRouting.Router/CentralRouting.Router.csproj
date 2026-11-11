@@ -15,4 +15,8 @@
     <ProjectReference Include="..\CentralRouting.Model\CentralRouting.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="CentralRouting.Tests" />
+  </ItemGroup>
+
 </Project>

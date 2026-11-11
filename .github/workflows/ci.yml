@@ -75,3 +75,39 @@ jobs:
         with:
           name: packages
           path: artifacts/packages
+
+  # The router host image, tagged with the MinVer version and latest. Pushed to ghcr.io from master and v* tags; pull requests only build it.
+  container:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Log in to ghcr.io
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        if: github.event_name == 'pull_request'
+        run: dotnet publish CentralRouting.Router.Host --configuration Release -t:PublishContainer -p:ContainerArchiveOutputPath=$RUNNER_TEMP/centralrouting-router.tar.gz
+
+      - name: Build and push image
+        if: github.event_name != 'pull_request'
+        run: |
+          dotnet publish CentralRouting.Router.Host --configuration Release -t:PublishContainer \
+            -p:ContainerRegistry=ghcr.io \
+            -p:ContainerRepository=${GITHUB_REPOSITORY_OWNER,,}/centralrouting-router

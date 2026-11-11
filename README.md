@@ -10,6 +10,7 @@ Implementation of the [design document](https://claude.ai/artifact/XTZmvdT2MGaFq
 | `CentralRouting.Router` | The router: raw transport interfaces, control message handling, forwarding and its pipeline, peering, routing model, HTTP API, store abstraction and an in-memory store |
 | `CentralRouting.Router.EntityFramework` | EF Core store. Endpoints and routes are stored as JSON documents with optimistic concurrency |
 | `CentralRouting.Router.SqlServer` / `.PostgreSql` | `UseSqlServerStorage(...)` / `UsePostgreSqlStorage(...)` |
+| `CentralRouting.Router.Host` | A router configured from settings and environment variables, published as a container image |
 | `CentralRouting.Cli` | `routing` command line tool for the router API |
 | `CentralRouting.NServiceBus` | Endpoint plugin and the configuration provider that fetches and caches the routing document |
 | `CentralRouting.Tests` | Unit tests for address policies, the capability model and the store contract |
@@ -81,6 +82,41 @@ router.AddSqlServerDeduplication("billing", connectionString);   // table dbo.Ro
 The message ID is inserted in the transaction the messages are sent in, so a message is forwarded and recorded, or neither. Rows are never removed.
 
 Storage goes through `IRouterStore`. It works with whole documents (an endpoint with all its instances, a route) and a revision counter, so a document database implementation only needs those operations.
+
+## Router container
+
+`CentralRouting.Router.Host` is a ready-made router configured without code, and the image CI pushes to `ghcr.io/szymonpobiega/centralrouting-router`. It includes the SQL Server, PostgreSQL, RabbitMQ, Azure Service Bus and learning transports. Settings are read from the `Router` section of `appsettings.json`, from environment variables (levels separated by `__`), or from secret files: each file in `/run/secrets` (or `SecretsDirectory`) is one setting named like the environment variable, such as `Router__Storage__ConnectionString`.
+
+```bash
+docker run -p 8080:8080 \
+  -e Router__Name=Branch042 \
+  -e Router__Storage__Type=SqlServer \
+  -e Router__Storage__ConnectionString="Server=sql;Database=Router;..." \
+  -e Router__Interfaces__local__Type=RabbitMQ \
+  -e Router__Interfaces__local__ConnectionString="host=rabbit;virtualHost=branch042" \
+  -e Router__Interfaces__local__Site=branch-042 \
+  -e Router__Interfaces__hq__Type=AzureServiceBus \
+  -e Router__Interfaces__hq__ConnectionString="Endpoint=sb://..." \
+  -e Router__Interfaces__hq__Site=hq \
+  -e Router__Peers__HQ__Interface=hq \
+  ghcr.io/szymonpobiega/centralrouting-router
+```
+
+| Setting | Values |
+| --- | --- |
+| `Router__Name` | Required |
+| `Router__HeartbeatInterval`, `RefreshInterval`, `PeerHeartbeatInterval` | `hh:mm:ss`; also `MissedHeartbeatsBeforeStale`, `MissedPeerHeartbeatsBeforeOffline`, `MaxHops`, `ImmediateRetries` |
+| `Router__Storage__Type`, `ConnectionString` | `InMemory` (default), `SqlServer` or `PostgreSql` |
+| `Router__Interfaces__{name}__Type` | `SqlServer`, `PostgreSql`, `RabbitMQ`, `AzureServiceBus` or `Learning` |
+| `…__ConnectionString` | The transport's connection string; the storage directory for `Learning` |
+| `…__Site` | Site ID; defaults to `{Router}.{name}` |
+| `…__SiteIdentities__0`, `__1`, … | Extra identities. The router derives one from the connection string for SQL Server, RabbitMQ, Azure Service Bus and learning; PostgreSQL requires one |
+| `…__TransactionMode` | Defaults to `SendsAtomicWithReceive` for SQL Server and PostgreSQL, the transport's default otherwise |
+| `…__Schema`, `QueueType`, `ErrorQueue`, `MaxSnapshotPartSize` | Schema for SQL Server and PostgreSQL, `Quorum` (default) or `Classic` for RabbitMQ |
+| `…__Deduplication` | `true` to forward into a SQL Server site at most once |
+| `Router__Peers__{name}__Interface`, `Url` or `Inbound` | Exactly one: a shared interface, the peer's HTTP API, or `true` when the peer calls this router |
+
+The router stops at startup with a list of every invalid setting. The API and `/health` listen on port 8080. Forwarding behaviors other than deduplication need a host of your own, built from the packages like the samples' routers.
 
 ## Command line tool
 
@@ -161,7 +197,7 @@ dotnet build
 dotnet test
 ```
 
-Every build of a library project, and of the CLI, also creates its NuGet package in `artifacts/packages`. The version comes from the latest `v*` git tag through MinVer: a tagged commit gets that version (`v0.2.0` → `0.2.0`), later commits a pre-release of the next patch, and a repository with no tags `0.0.0-alpha.0`. GitHub Actions (`.github/workflows/ci.yml`) builds, tests against a SQL Server container, builds the samples, and uploads the packages as an artifact.
+Every build of a library project, and of the CLI, also creates its NuGet package in `artifacts/packages`. The version comes from the latest `v*` git tag through MinVer: a tagged commit gets that version (`v0.2.0` → `0.2.0`), later commits a pre-release of the next patch, and a repository with no tags `0.0.0-alpha.0`. GitHub Actions (`.github/workflows/ci.yml`) builds, tests against a SQL Server container, builds the samples, and uploads the packages as an artifact. It then builds the router image and, on `master` and tags, pushes it to ghcr.io. To build the image locally: `dotnet publish CentralRouting.Router.Host -c Release -t:PublishContainer` (needs Docker, or add `-p:ContainerArchiveOutputPath=router.tar.gz`).
 
 Tests that use SQL Server connect to the local default instance with integrated security. Override the connection string with the `CentralRouting_SqlServer_ConnectionString` environment variable. Tests are ignored when SQL Server is not reachable.
 

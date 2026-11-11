@@ -14,6 +14,7 @@
     <ProjectReference Include="..\CentralRouting.Router\CentralRouting.Router.csproj" />
     <ProjectReference Include="..\CentralRouting.Router.SqlServer\CentralRouting.Router.SqlServer.csproj" />
     <ProjectReference Include="..\CentralRouting.NServiceBus\CentralRouting.NServiceBus.csproj" />
+    <ProjectReference Include="..\CentralRouting.Router.Host\CentralRouting.Router.Host.csproj" />
   </ItemGroup>
 
 </Project>
