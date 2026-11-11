@@ -1,0 +1,33 @@
+<Project>
+
+  <!-- Projects are not packaged unless they set IsPackable. Packable projects build their package on every build. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <Authors>Szymon Pobiega</Authors>
+    <PackageProjectUrl>https://github.com/SzymonPobiega/CentralizedRouting</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SzymonPobiega/CentralizedRouting.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages</PackageOutputPath>
+  </PropertyGroup>
+
+  <!-- Versions come from git tags (v1.2.3) through MinVer; commits after a tag get a pre-release version -->
+  <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Items are evaluated after all properties, so IsPackable set in the project file applies here -->
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+</Project>

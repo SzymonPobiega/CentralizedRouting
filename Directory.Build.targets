@@ -1,0 +1,8 @@
+<Project>
+
+  <!-- Here rather than in Directory.Build.props, because project files set IsPackable after the props are imported -->
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+</Project>

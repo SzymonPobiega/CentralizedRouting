@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  SQL_PASSWORD: CentralRouting!Ci2026
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # The SQL Server store, deduplication and acceptance tests run against it; without it they are ignored
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: CentralRouting!Ci2026
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'CentralRouting!Ci2026' -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # MinVer computes the version from tags
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore CentralRouting.sln
+
+      - name: Build and pack
+        run: dotnet build CentralRouting.sln --configuration Release --no-restore
+
+      # Separate databases: the store tests drop and recreate theirs
+      - name: Unit tests
+        run: dotnet test CentralRouting.Tests/CentralRouting.Tests.csproj --configuration Release --no-build --logger trx --results-directory TestResults
+        env:
+          CentralRouting_SqlServer_ConnectionString: Server=localhost,1433;Database=CentralRoutingStoreTests;User Id=sa;Password=${{ env.SQL_PASSWORD }};TrustServerCertificate=true
+
+      - name: Acceptance tests
+        run: dotnet test CentralRouting.AcceptanceTests/CentralRouting.AcceptanceTests.csproj --configuration Release --no-build --logger trx --results-directory TestResults
+        env:
+          CentralRouting_SqlServer_ConnectionString: Server=localhost,1433;Database=CentralRoutingTests;User Id=sa;Password=${{ env.SQL_PASSWORD }};TrustServerCertificate=true
+
+      - name: Build samples
+        run: |
+          for solution in Samples/*/*.sln; do
+            dotnet build "$solution" --configuration Release
+          done
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: artifacts/packages

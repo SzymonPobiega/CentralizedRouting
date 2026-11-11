@@ -154,11 +154,14 @@ Each sample is self-contained: its folder has a solution with the sample's proje
 | Topology 4: backplane | `Topology4.sln` | A SQL Server database and router per part, routers peered over Azure Service Bus | [WALKTHROUGH.md](Samples/Topology4-Backplane/WALKTHROUGH.md) |
 | Topology 5: migration between sites | `Topology5.sln` | Starts with every endpoint on RabbitMQ and moves them to Azure Service Bus one at a time with the NewestSite policy | [WALKTHROUGH.md](Samples/Topology5-Migration/WALKTHROUGH.md) |
 
-## Tests
+## Build and tests
 
 ```
+dotnet build
 dotnet test
 ```
+
+Every build of a library project, and of the CLI, also creates its NuGet package in `artifacts/packages`. The version comes from the latest `v*` git tag through MinVer: a tagged commit gets that version (`v0.2.0` → `0.2.0`), later commits a pre-release of the next patch, and a repository with no tags `0.0.0-alpha.0`. GitHub Actions (`.github/workflows/ci.yml`) builds, tests against a SQL Server container, builds the samples, and uploads the packages as an artifact.
 
 Tests that use SQL Server connect to the local default instance with integrated security. Override the connection string with the `CentralRouting_SqlServer_ConnectionString` environment variable. Tests are ignored when SQL Server is not reachable.
 

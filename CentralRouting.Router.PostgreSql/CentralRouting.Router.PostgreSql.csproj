@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <Description>PostgreSQL storage for the central routing router.</Description>
   </PropertyGroup>
 
   <ItemGroup>
