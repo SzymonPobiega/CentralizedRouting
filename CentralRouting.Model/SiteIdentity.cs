@@ -43,6 +43,27 @@ namespace CentralRouting.Model
         }
 
         /// <summary>
+        /// Host, port when not 5432, database and schema, e.g. <c>postgresql:v1:client-pi/booth/public</c>.
+        /// </summary>
+        public static string ForPostgreSql(string connectionString, string schema = "public")
+        {
+            var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
+            var host = Find(builder, "Host", "Server")
+                       ?? throw new ArgumentException("The connection string has no host.", nameof(connectionString));
+            var database = Find(builder, "Database", "DB")
+                           ?? throw new ArgumentException("The connection string has no database.", nameof(connectionString));
+            var port = Find(builder, "Port");
+
+            host = host.Trim();
+            if (port != null && port.Trim() != "5432")
+            {
+                host = $"{host}:{port.Trim()}";
+            }
+
+            return $"postgresql:v1:{host}/{database}/{schema}".ToLowerInvariant();
+        }
+
+        /// <summary>
         /// The namespace's fully qualified name, e.g. <c>asb:v1:contoso-hq.servicebus.windows.net</c>.
         /// Takes a connection string or the namespace name itself.
         /// </summary>

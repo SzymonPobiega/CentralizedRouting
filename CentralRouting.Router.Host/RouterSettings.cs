@@ -16,6 +16,8 @@ namespace CentralRouting.Router.Host
         public TimeSpan? RefreshInterval { get; set; }
         public int? MaxHops { get; set; }
         public int? ImmediateRetries { get; set; }
+        public TimeSpan? InterfaceReconnectInterval { get; set; }
+        public TimeSpan? UnavailableSiteRetryInterval { get; set; }
         public TimeSpan? PeerHeartbeatInterval { get; set; }
         public int? MissedPeerHeartbeatsBeforeOffline { get; set; }
         public StorageSettings Storage { get; set; } = new StorageSettings();
@@ -72,12 +74,18 @@ namespace CentralRouting.Router.Host
 
         /// <summary>
         /// Identities endpoints on the site compute, in addition to the one derived from <see cref="ConnectionString"/>.
-        /// Required for PostgreSQL, whose identity is not derived.
+        /// Needed when the router reaches the site by another host name than the endpoints, e.g. a Docker service name.
         /// </summary>
         public List<string> SiteIdentities { get; set; } = new List<string>();
 
         public string ErrorQueue { get; set; }
         public int? MaxSnapshotPartSize { get; set; }
+
+        /// <summary>
+        /// The router's queue on the site as endpoints address it, used until the router first connects to the site.
+        /// Defaults to the router's name.
+        /// </summary>
+        public string RouterAddress { get; set; }
 
         /// <summary>
         /// Defaults to SendsAtomicWithReceive for SQL Server and PostgreSQL, which forwards without distributed transactions,

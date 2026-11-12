@@ -75,7 +75,6 @@ namespace CentralRouting.Tests
             Assert.That(exception.Message, Does.Contain("Router:Storage:ConnectionString is required for PostgreSql storage"));
             Assert.That(exception.Message, Does.Contain("Router:Interfaces:mq:Type is required"));
             Assert.That(exception.Message, Does.Contain("Router:Interfaces:pg:Deduplication is only supported on SQL Server"));
-            Assert.That(exception.Message, Does.Contain("Router:Interfaces:pg:SiteIdentities is required"));
             Assert.That(exception.Message, Does.Contain("Router:Peers:HQ needs exactly one of Interface, Url and Inbound"));
         }
 

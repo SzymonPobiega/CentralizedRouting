@@ -74,10 +74,16 @@ namespace CentralRouting.Cli
             var sites = await router.Get<List<SiteView>>("sites", cancellationToken).ConfigureAwait(false);
             Output.Write(settings, sites, _ =>
             {
-                var table = Output.Table("Site", "Interface", "Router address", "Identities");
+                var table = Output.Table("Site", "Interface", "Status", "Router address", "Identities");
                 foreach (var site in sites.OrderBy(s => s.SiteId))
                 {
-                    table.AddRow(Markup.Escape(site.SiteId), Output.Text(site.Interface), Output.Text(site.RouterAddress), Output.List(site.Identities));
+                    var status = site.Status switch
+                    {
+                        SiteStatus.Connected => "[green]Connected[/]",
+                        SiteStatus.Unreachable => "[red]Unreachable[/]",
+                        _ => "[yellow]Connecting[/]"
+                    };
+                    table.AddRow(Markup.Escape(site.SiteId), Output.Text(site.Interface), status, Output.Text(site.RouterAddress), Output.List(site.Identities));
                 }
                 AnsiConsole.Write(table);
             });

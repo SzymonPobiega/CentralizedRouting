@@ -1,4 +1,5 @@
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using CentralRouting.Model;
 using CentralRouting.Router;
 
@@ -19,9 +20,11 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(configuration);
             services.AddSingleton(sp => configuration.StoreFactory(sp));
             services.AddSingleton<RouterTopology>();
+            services.AddSingleton<SiteAvailability>();
             services.AddSingleton(sp => new RoutingSnapshotProvider(sp.GetRequiredService<IRouterStore>(), configuration, sp.GetRequiredService<RouterTopology>()));
             services.AddSingleton<PeeringService>();
-            services.AddSingleton(sp => new ForwardingPipeline(configuration.ForwardingBehaviors.Select(f => f(sp)), sp.GetRequiredService<RouterTopology>()));
+            services.AddSingleton(sp => new ForwardingPipeline(configuration.ForwardingBehaviors.Select(f => f(sp)), sp.GetRequiredService<RouterTopology>(),
+                sp.GetRequiredService<SiteAvailability>(), sp.GetRequiredService<ILogger<ForwardingPipeline>>()));
             services.AddSingleton<ControlMessageHandler>();
             services.AddSingleton<Forwarder>();
             services.AddHostedService<RouterHostedService>();

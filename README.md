@@ -15,6 +15,7 @@ Implementation of the [design document](https://claude.ai/artifact/XTZmvdT2MGaFq
 | `CentralRouting.NServiceBus` | Endpoint plugin and the configuration provider that fetches and caches the routing document |
 | `CentralRouting.Tests` | Unit tests for address policies, the capability model and the store contract |
 | `CentralRouting.AcceptanceTests` | End-to-end tests: one router, two learning-transport sites, real endpoints |
+| `Rehearsal/Booth` | The conference booth demo's sites and routers in Docker, with scripts for its failure scenarios. Not part of `CentralRouting.sln` |
 | `Samples` | One folder per deployment topology, each with its own solution, routers, endpoints, messages and walkthrough. Not part of `CentralRouting.sln` |
 
 ## Router
@@ -55,6 +56,16 @@ Subscriptions belong to the subscriber's router, the single publisher of an even
 2. The publisher's router grants it automatically: its next document tells the publisher to send one copy to the router (`forward: true`), and once every live publisher instance runs that revision the grant appears in its snapshot.
 3. Only then does `POST /api/v1/routes/{type}/subscribers` succeed on the subscriber's router (`409` before). Adding an endpoint that belongs to a peer is always a `409`, and validation reports a stored one as `PeerSubscriber` (Invalid): a router delivers events to its own endpoints and to peers, never to a peer's endpoints. `DELETE /api/v1/subscription-requests/{type}` withdraws the request once no subscribers are left.
 
+### Unreachable sites
+
+A site that can't be reached when the router starts doesn't stop it: the router starts with its other interfaces and tries to connect the missing one every `InterfaceReconnectInterval` (10 seconds). Until it connects, the routing document gives the router's address on that site as its queue name (the router's name), or as `InterfaceConfiguration.RouterAddress` when set. Every transport accepts the queue name from an endpoint on the same broker or database, unless the router's queue lives in a non-default SQL schema.
+
+A site that is down holds up only the messages for that site. The router forwards each received message to each destination site separately, running the forwarding behaviors once per site. A site that fails is retried a few times within about a second, on its own, without sending again to the others. If it still fails, or is already known to be down, its copies move to a holding queue for that site, `{Router}.Pending.{site}`, on the site the message came from, in the receive's transaction; the received message then completes. A site's copies of one message are held together as one message, whose `CentralRouting.HeldFor` header lists their queues.
+
+Each holding queue has its own receiver, one message at a time. When it can't send a held message, the router sends a probe to its own control queue on the destination site. If the probe fails as well, the site is down: the message waits and is retried every `UnavailableSiteRetryInterval` (5 seconds). If the probe succeeds, the failure is the message's own, and after the immediate retries it moves to the error queue, from which it can be retried into the holding queue. Held messages can arrive after newer ones sent once the site is back.
+
+`routing sites` shows each site as `Connected`, `Unreachable` (the last dispatch or probe failed) or `Connecting` (not connected since the router started). Receive-side outages, such as losing the connection to a database the router reads from, are handled by the transport and are not reflected in that status.
+
 ### Forwarding behaviors
 
 ```csharp
@@ -64,7 +75,7 @@ class MyBehavior : IForwardingBehavior
 {
     public async Task Invoke(ForwardingContext context, Func<Task> next)
     {
-        // context.Messages: where the router is about to send the message; change, add or remove them
+        // Runs once per destination site. context.Messages: the copies for that site; change, add or remove them
         await next();   // dispatches; skipping it drops the message
         // runs after dispatch, before the received message is acknowledged
     }
@@ -85,7 +96,7 @@ Storage goes through `IRouterStore`. It works with whole documents (an endpoint 
 
 ## Router container
 
-`CentralRouting.Router.Host` is a ready-made router configured without code, and the image CI pushes to `ghcr.io/szymonpobiega/centralrouting-router`. It includes the SQL Server, PostgreSQL, RabbitMQ, Azure Service Bus and learning transports. Settings are read from the `Router` section of `appsettings.json`, from environment variables (levels separated by `__`), or from secret files: each file in `/run/secrets` (or `SecretsDirectory`) is one setting named like the environment variable, such as `Router__Storage__ConnectionString`.
+`CentralRouting.Router.Host` is a ready-made router configured without code, and the image CI pushes to `ghcr.io/szymonpobiega/centralrouting-router`, for linux-x64 and linux-arm64 (such as a Raspberry Pi). It includes the SQL Server, PostgreSQL, RabbitMQ, Azure Service Bus and learning transports. Settings are read from the `Router` section of `appsettings.json`, from environment variables (levels separated by `__`), or from secret files: each file in `/run/secrets` (or `SecretsDirectory`) is one setting named like the environment variable, such as `Router__Storage__ConnectionString`.
 
 ```bash
 docker run -p 8080:8080 \
@@ -105,12 +116,13 @@ docker run -p 8080:8080 \
 | Setting | Values |
 | --- | --- |
 | `Router__Name` | Required |
-| `Router__HeartbeatInterval`, `RefreshInterval`, `PeerHeartbeatInterval` | `hh:mm:ss`; also `MissedHeartbeatsBeforeStale`, `MissedPeerHeartbeatsBeforeOffline`, `MaxHops`, `ImmediateRetries` |
+| `Router__HeartbeatInterval`, `RefreshInterval`, `PeerHeartbeatInterval`, `InterfaceReconnectInterval`, `UnavailableSiteRetryInterval` | `hh:mm:ss`; also `MissedHeartbeatsBeforeStale`, `MissedPeerHeartbeatsBeforeOffline`, `MaxHops`, `ImmediateRetries` |
 | `Router__Storage__Type`, `ConnectionString` | `InMemory` (default), `SqlServer` or `PostgreSql` |
 | `Router__Interfaces__{name}__Type` | `SqlServer`, `PostgreSql`, `RabbitMQ`, `AzureServiceBus` or `Learning` |
 | `…__ConnectionString` | The transport's connection string; the storage directory for `Learning` |
 | `…__Site` | Site ID; defaults to `{Router}.{name}` |
-| `…__SiteIdentities__0`, `__1`, … | Extra identities. The router derives one from the connection string for SQL Server, RabbitMQ, Azure Service Bus and learning; PostgreSQL requires one |
+| `…__SiteIdentities__0`, `__1`, … | Extra identities. The router derives one from the connection string for every transport; add one when the router reaches the broker by another host name than the endpoints, such as a Docker service name |
+| `…__RouterAddress` | The router's queue as endpoints on the site address it, used until the interface first connects; defaults to the router's name |
 | `…__TransactionMode` | Defaults to `SendsAtomicWithReceive` for SQL Server and PostgreSQL, the transport's default otherwise |
 | `…__Schema`, `QueueType`, `ErrorQueue`, `MaxSnapshotPartSize` | Schema for SQL Server and PostgreSQL, `Quorum` (default) or `Classic` for RabbitMQ |
 | `…__Deduplication` | `true` to forward into a SQL Server site at most once |

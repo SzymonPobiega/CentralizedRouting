@@ -12,7 +12,25 @@ namespace CentralRouting.Router
 
     public record ProposedRoute(string MessageType, RouteKind Kind, string Destination, string Publisher, List<string> Subscribers);
 
-    public record SiteView(string SiteId, string Interface, string RouterAddress, IReadOnlyList<string> Identities);
+    public record SiteView(string SiteId, string Interface, string RouterAddress, IReadOnlyList<string> Identities, SiteStatus Status);
+
+    public enum SiteStatus
+    {
+        /// <summary>
+        /// The interface is connected and the last dispatch to the site succeeded.
+        /// </summary>
+        Connected,
+
+        /// <summary>
+        /// The interface is connected, but the site did not accept the last dispatch or probe.
+        /// </summary>
+        Unreachable,
+
+        /// <summary>
+        /// The interface has not connected yet; the router keeps trying.
+        /// </summary>
+        Connecting
+    }
 
     public record InstanceView(string InstanceId, string SiteId, string InputQueue, string HostName, InstanceStatus Status,
         bool Disabled, DateTimeOffset LastReportAt, long DocumentRevision);

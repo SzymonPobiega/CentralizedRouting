@@ -17,6 +17,17 @@ namespace CentralRouting.Tests
         }
 
         [Test]
+        public void PostgreSql_identity_ignores_credentials_options_and_the_default_port()
+        {
+            var endpoint = SiteIdentity.ForPostgreSql("Host=Client-Pi;Port=5432;Database=Booth;Username=app;Password=secret;Pooling=true");
+            var router = SiteIdentity.ForPostgreSql("Server=client-pi;Database=booth;Username=router;Password=other");
+
+            Assert.That(endpoint, Is.EqualTo("postgresql:v1:client-pi/booth/public"));
+            Assert.That(router, Is.EqualTo(endpoint));
+            Assert.That(SiteIdentity.ForPostgreSql("Host=client-pi;Port=54320;Database=booth", "orders"), Is.EqualTo("postgresql:v1:client-pi:54320/booth/orders"));
+        }
+
+        [Test]
         public void RabbitMQ_identity_is_the_sorted_hosts_and_virtual_host()
         {
             var connectionString = SiteIdentity.ForRabbitMQ("host=dc2-mq-2,DC2-MQ-1:5672;virtualHost=Branch;username=app;password=secret");

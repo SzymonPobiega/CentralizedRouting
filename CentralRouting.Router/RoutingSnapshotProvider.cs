@@ -34,7 +34,14 @@ namespace CentralRouting.Router
     {
         readonly Dictionary<string, RouterInterface> interfacesBySite = new Dictionary<string, RouterInterface>();
 
-        public IReadOnlyList<RouterSite> Sites { get; private set; } = Array.Empty<RouterSite>();
+        /// <summary>
+        /// Read on every snapshot refresh, so the router's address on a site that connected late replaces the fallback.
+        /// </summary>
+        public IReadOnlyList<RouterSite> Sites => interfacesBySite.Values
+            .Select(i => new RouterSite(i.SiteId, i.Name, i.Configuration.SiteIdentities.ToList(), i.RouterAddress))
+            .ToList();
+
+        public IEnumerable<RouterInterface> Interfaces => interfacesBySite.Values;
 
         public void Initialize(IEnumerable<RouterInterface> interfaces)
         {
@@ -42,10 +49,12 @@ namespace CentralRouting.Router
             {
                 interfacesBySite[routerInterface.SiteId] = routerInterface;
             }
+        }
 
-            Sites = interfacesBySite.Values
-                .Select(i => new RouterSite(i.SiteId, i.Name, i.Configuration.SiteIdentities.ToList(), i.RouterAddress))
-                .ToList();
+        public bool TryGetInterface(string site, out RouterInterface routerInterface)
+        {
+            routerInterface = null;
+            return site != null && interfacesBySite.TryGetValue(site, out routerInterface);
         }
 
         public RouterInterface GetInterfaceByName(string name)

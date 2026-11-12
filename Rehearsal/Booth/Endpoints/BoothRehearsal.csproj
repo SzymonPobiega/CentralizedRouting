@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>BoothRehearsal</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.RabbitMQ" Version="11.2.1" />
+    <PackageReference Include="NServiceBus.Transport.PostgreSql" Version="9.1.1" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- New host ID algorithm; the rehearsal has no older instances to stay compatible with -->
+    <RuntimeHostConfigurationOption Include="NServiceBus.Core.Hosting.UseV2DeterministicGuid" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\CentralRouting.NServiceBus\CentralRouting.NServiceBus.csproj" />
+  </ItemGroup>
+
+</Project>

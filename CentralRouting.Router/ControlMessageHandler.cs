@@ -36,6 +36,12 @@ namespace CentralRouting.Router
                 throw new UnforwardableMessageException($"Message {message.NativeMessageId} received on the control queue is not a control message.");
             }
 
+            if (messageType == ControlMessageTypes.Probe)
+            {
+                //Sent by this router to check that the site is reachable; arriving is all it has to do
+                return;
+            }
+
             if (messageType == ControlMessageTypes.PeerSnapshot)
             {
                 await peering.ReceivePart(message.Headers, message.Body, cancellationToken).ConfigureAwait(false);

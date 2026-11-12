@@ -17,6 +17,11 @@ namespace CentralRouting.Model
         public const string SnapshotPart = "CentralRouting.Snapshot.Part";
         public const string SnapshotPartCount = "CentralRouting.Snapshot.PartCount";
         public const string FailureReason = "CentralRouting.FailureReason";
+
+        /// <summary>
+        /// On a message in a router's holding queue: the queues on the destination site to send it to, as a JSON array.
+        /// </summary>
+        public const string HeldFor = "CentralRouting.HeldFor";
         public const string ControlMessageType = "CentralRouting.Control.Type";
         public const string ControlMessageVersion = "CentralRouting.Control.Version";
     }
@@ -29,5 +34,10 @@ namespace CentralRouting.Model
         public const string CapabilityReport = "CapabilityReport";
         public const string InstanceStopping = "InstanceStopping";
         public const string PeerSnapshot = "PeerSnapshot";
+
+        /// <summary>
+        /// Sent by a router to its own control queue to find out whether a site is reachable. Ignored on receipt.
+        /// </summary>
+        public const string Probe = "Probe";
     }
 }

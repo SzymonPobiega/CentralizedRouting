@@ -6,6 +6,9 @@
 
     <!-- dotnet publish /t:PublishContainer builds the image on the .NET ASP.NET base image; it runs as the non-root app user on port 8080 -->
     <ContainerRepository>centralrouting-router</ContainerRepository>
+    <!-- One image for x64 hosts and arm64 ones such as a Raspberry Pi -->
+    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
+    <RuntimeIdentifiers>$(ContainerRuntimeIdentifiers)</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>

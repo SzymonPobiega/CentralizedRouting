@@ -51,6 +51,18 @@ namespace CentralRouting.Router
         public int ImmediateRetries { get; set; } = 5;
 
         /// <summary>
+        /// How often the router tries again to connect an interface whose site was unreachable.
+        /// The router starts without such an interface and attaches to the site once it connects.
+        /// </summary>
+        public TimeSpan InterfaceReconnectInterval { get; set; } = TimeSpan.FromSeconds(10);
+
+        /// <summary>
+        /// How long a message whose destination site is unreachable waits before the router retries it.
+        /// Such a message stays in the queue it was received from instead of moving to the error queue.
+        /// </summary>
+        public TimeSpan UnavailableSiteRetryInterval { get; set; } = TimeSpan.FromSeconds(5);
+
+        /// <summary>
         /// Adds an interface that connects the router to a site.
         /// </summary>
         public InterfaceConfiguration AddInterface(string name, TransportDefinition transport)
@@ -197,6 +209,12 @@ namespace CentralRouting.Router
         public List<string> SiteIdentities { get; } = new List<string>();
 
         public string ErrorQueue { get; set; } = "error";
+
+        /// <summary>
+        /// Address of the router's queue on the site, published in the routing document until the interface first connects
+        /// (afterwards the transport's own address is used). Defaults to the router's name, the queue's name on every transport.
+        /// </summary>
+        public string RouterAddress { get; set; }
 
         /// <summary>
         /// Maximum size of a snapshot part sent to peers through this interface, in bytes.

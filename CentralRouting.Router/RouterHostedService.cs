@@ -20,16 +20,19 @@ namespace CentralRouting.Router
         readonly ControlMessageHandler controlMessageHandler;
         readonly Forwarder forwarder;
         readonly PeeringService peering;
+        readonly SiteAvailability availability;
         readonly ILoggerFactory loggerFactory;
         readonly ILogger logger;
         readonly List<RouterInterface> interfaces = new List<RouterInterface>();
+        readonly List<Task> reconnectLoops = new List<Task>();
         readonly CancellationTokenSource stopping = new CancellationTokenSource();
         Task refreshLoop;
 
         public RouterHostedService(RouterConfiguration configuration, IRouterStore store, RouterTopology topology,
             RoutingSnapshotProvider snapshots, ControlMessageHandler controlMessageHandler, Forwarder forwarder, PeeringService peering,
-            ILoggerFactory loggerFactory)
+            SiteAvailability availability, ILoggerFactory loggerFactory)
         {
+            this.availability = availability;
             this.configuration = configuration;
             this.store = store;
             this.topology = topology;
@@ -49,19 +52,39 @@ namespace CentralRouting.Router
 
             foreach (var interfaceConfiguration in configuration.Interfaces)
             {
-                var routerInterface = new RouterInterface(configuration.Name, interfaceConfiguration, configuration.ImmediateRetries,
-                    loggerFactory.CreateLogger($"{typeof(RouterInterface).FullName}.{interfaceConfiguration.Name}"));
-                await routerInterface.Initialize(forwarder.Forward, controlMessageHandler.Handle, cancellationToken).ConfigureAwait(false);
-                interfaces.Add(routerInterface);
+                interfaces.Add(new RouterInterface(configuration, interfaceConfiguration, availability,
+                    loggerFactory.CreateLogger($"{typeof(RouterInterface).FullName}.{interfaceConfiguration.Name}")));
             }
-
             topology.Initialize(interfaces);
+
+            //A site that is unreachable now doesn't keep the router from serving the others
+            var attempts = interfaces.Select(async routerInterface =>
+            {
+                try
+                {
+                    await Connect(routerInterface, cancellationToken).ConfigureAwait(false);
+                    return null;
+                }
+                catch (Exception e) when (!cancellationToken.IsCancellationRequested)
+                {
+                    logger.LogWarning(e, "Site {Site} is unreachable through interface {Interface}. The router starts without it and tries again every {Interval}",
+                        routerInterface.SiteId, routerInterface.Name, configuration.InterfaceReconnectInterval);
+                    return routerInterface;
+                }
+            });
+            var unreachable = (await Task.WhenAll(attempts).ConfigureAwait(false)).Where(i => i != null).ToList();
+
             await snapshots.Refresh(true, cancellationToken).ConfigureAwait(false);
 
-            foreach (var routerInterface in interfaces)
+            foreach (var routerInterface in interfaces.Except(unreachable))
             {
                 await routerInterface.StartReceive(cancellationToken).ConfigureAwait(false);
-                logger.LogInformation("Router {Router} attached to site {Site} through interface {Interface}", configuration.Name, routerInterface.SiteId, routerInterface.Name);
+                LogAttached(routerInterface);
+            }
+
+            foreach (var routerInterface in unreachable)
+            {
+                reconnectLoops.Add(Task.Run(() => Reconnect(routerInterface, stopping.Token), CancellationToken.None));
             }
 
             refreshLoop = Task.Run(() => RefreshLoop(stopping.Token), CancellationToken.None);
@@ -74,11 +97,69 @@ namespace CentralRouting.Router
             {
                 await refreshLoop.ConfigureAwait(false);
             }
+            await Task.WhenAll(reconnectLoops).ConfigureAwait(false);
 
             foreach (var routerInterface in interfaces)
             {
                 await routerInterface.Stop(cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        /// <summary>
+        /// Keeps trying to connect an interface whose site was unreachable at startup. Once connected, the router's address
+        /// on the site replaces the fallback in the routing document.
+        /// </summary>
+        async Task Reconnect(RouterInterface routerInterface, CancellationToken cancellationToken)
+        {
+            var fallbackAddress = routerInterface.RouterAddress;
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(configuration.InterfaceReconnectInterval, cancellationToken).ConfigureAwait(false);
+                    await Connect(routerInterface, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception e)
+                {
+                    logger.LogDebug(e, "Site {Site} is still unreachable through interface {Interface}", routerInterface.SiteId, routerInterface.Name);
+                    continue;
+                }
+
+                try
+                {
+                    await routerInterface.StartReceive(cancellationToken).ConfigureAwait(false);
+                    if (routerInterface.RouterAddress != fallbackAddress)
+                    {
+                        await snapshots.Changed(cancellationToken).ConfigureAwait(false);
+                    }
+                    LogAttached(routerInterface);
+                    return;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception e)
+                {
+                    logger.LogDebug(e, "Interface {Interface} connected to site {Site} but failed to start", routerInterface.Name, routerInterface.SiteId);
+                    await routerInterface.Stop(CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+        }
+
+        Task Connect(RouterInterface routerInterface, CancellationToken cancellationToken)
+        {
+            var otherSites = interfaces.Where(i => i != routerInterface).Select(i => i.SiteId).ToList();
+            return routerInterface.Connect(forwarder.Forward, controlMessageHandler.Handle, forwarder.ForwardHeld, otherSites, cancellationToken);
+        }
+
+        void LogAttached(RouterInterface routerInterface)
+        {
+            logger.LogInformation("Router {Router} attached to site {Site} through interface {Interface}", configuration.Name, routerInterface.SiteId, routerInterface.Name);
         }
 
         async Task RefreshLoop(CancellationToken cancellationToken)

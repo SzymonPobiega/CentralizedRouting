@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CentralRouting.Model;
@@ -63,7 +64,28 @@ namespace CentralRouting.Router
                 return;
             }
 
-            await pipeline.Invoke(context).ConfigureAwait(false);
+            await pipeline.Forward(context, incoming).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Sends a message from the holding queue for <paramref name="site"/> to the queues it was held for. The routing was
+        /// resolved when the message was first received, so it is not resolved again.
+        /// </summary>
+        public async Task ForwardHeld(RouterInterface incoming, string site, MessageContext message, CancellationToken cancellationToken)
+        {
+            if (!message.Headers.TryGetValue(RoutingHeaders.HeldFor, out var heldFor))
+            {
+                throw new UnforwardableMessageException($"The message in the holding queue for site '{site}' has no {RoutingHeaders.HeldFor} header.");
+            }
+
+            var addresses = JsonSerializer.Deserialize<string[]>(heldFor);
+            var headers = new Dictionary<string, string>(message.Headers);
+            headers.Remove(RoutingHeaders.HeldFor);
+            var messageId = headers.TryGetValue(Headers.MessageId, out var id) ? id : message.NativeMessageId;
+
+            var context = new ForwardingContext(messageId, headers, message.Body, incoming.Name, incoming.SiteId, message.TransportTransaction, cancellationToken);
+            context.Messages.AddRange(addresses.Select(address => new ForwardedMessage(site, address, new Dictionary<string, string>(headers), message.Body)));
+            await pipeline.ForwardHeld(context).ConfigureAwait(false);
         }
 
         void Resolve(RouterInterface incoming, Dictionary<string, string> headers, ForwardingContext context)

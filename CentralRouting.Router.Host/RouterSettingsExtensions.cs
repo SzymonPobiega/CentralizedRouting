@@ -26,6 +26,8 @@ namespace CentralRouting.Router.Host
             if (settings.RefreshInterval is { } refreshInterval) router.RefreshInterval = refreshInterval;
             if (settings.MaxHops is { } maxHops) router.MaxHops = maxHops;
             if (settings.ImmediateRetries is { } immediateRetries) router.ImmediateRetries = immediateRetries;
+            if (settings.InterfaceReconnectInterval is { } reconnectInterval) router.InterfaceReconnectInterval = reconnectInterval;
+            if (settings.UnavailableSiteRetryInterval is { } unavailableSiteRetryInterval) router.UnavailableSiteRetryInterval = unavailableSiteRetryInterval;
             if (settings.PeerHeartbeatInterval is { } peerHeartbeatInterval) router.PeerHeartbeatInterval = peerHeartbeatInterval;
             if (settings.MissedPeerHeartbeatsBeforeOffline is { } missedPeerHeartbeats) router.MissedPeerHeartbeatsBeforeOffline = missedPeerHeartbeats;
 
@@ -46,6 +48,7 @@ namespace CentralRouting.Router.Host
                 if (!string.IsNullOrWhiteSpace(interfaceSettings.Site)) routerInterface.Site = interfaceSettings.Site;
                 if (interfaceSettings.ErrorQueue != null) routerInterface.ErrorQueue = interfaceSettings.ErrorQueue;
                 if (interfaceSettings.MaxSnapshotPartSize is { } maxPartSize) routerInterface.MaxSnapshotPartSize = maxPartSize;
+                if (interfaceSettings.RouterAddress != null) routerInterface.RouterAddress = interfaceSettings.RouterAddress;
 
                 var identities = interfaceSettings.SiteIdentities.Prepend(DeriveIdentity(type, interfaceSettings));
                 foreach (var identity in identities.Where(i => i != null && !routerInterface.SiteIdentities.Contains(i)))
@@ -115,11 +118,6 @@ namespace CentralRouting.Router.Host
                 {
                     yield return $"{prefix}:Deduplication is only supported on SQL Server interfaces.";
                 }
-
-                if (interfaceSettings.Type == TransportType.PostgreSql && interfaceSettings.SiteIdentities.Count == 0)
-                {
-                    yield return $"{prefix}:SiteIdentities is required for PostgreSQL, whose site identity is not derived from the connection string.";
-                }
             }
 
             foreach (var (name, peer) in settings.Peers)
@@ -170,6 +168,7 @@ namespace CentralRouting.Router.Host
             return type switch
             {
                 TransportType.SqlServer => SiteIdentity.ForSqlServer(settings.ConnectionString, settings.Schema ?? "dbo"),
+                TransportType.PostgreSql => SiteIdentity.ForPostgreSql(settings.ConnectionString, settings.Schema ?? "public"),
                 TransportType.RabbitMQ => SiteIdentity.ForRabbitMQ(settings.ConnectionString),
                 TransportType.AzureServiceBus => SiteIdentity.ForAzureServiceBus(settings.ConnectionString),
                 _ => null

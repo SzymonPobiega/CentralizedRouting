@@ -68,11 +68,16 @@ namespace CentralRouting.Router
             return Results.Json(snapshot.Document, RoutingJson.Options);
         }
 
-        static IResult GetSites(RoutingSnapshotProvider snapshots)
+        static IResult GetSites(RoutingSnapshotProvider snapshots, SiteAvailability availability)
         {
             var document = snapshots.Current.Document;
             return Results.Ok(snapshots.Current.Model.Sites
-                .Select(s => new SiteView(s.SiteId, s.InterfaceName, s.RouterAddress, document.Sites[s.SiteId].Identities)));
+                .Select(s => new SiteView(s.SiteId, s.InterfaceName, s.RouterAddress, document.Sites[s.SiteId].Identities, Status(s.SiteId))));
+
+            SiteStatus Status(string site) =>
+                !availability.IsConnected(site) ? SiteStatus.Connecting
+                : availability.IsUnavailable(site) ? SiteStatus.Unreachable
+                : SiteStatus.Connected;
         }
 
         static async Task<IResult> GetEndpoints(RoutingSnapshotProvider snapshots, CancellationToken cancellationToken)

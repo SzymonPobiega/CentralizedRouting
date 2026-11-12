@@ -1,0 +1,89 @@
+# The booth demo's brokers and routers on one machine. The endpoints run on the host (run.ps1).
+#
+#   rabbitmq      the Gateway Pi's RabbitMQ: the booth site
+#   clientdb      the ClientUI Pi's local PostgreSQL: the client site of ClientUI's robust mode
+#   routerdb      the Booth router's storage
+#   booth-router  the Gateway Pi's router: RabbitMQ, the client database and Azure Service Bus
+#   cloud-router  the router in Azure: Azure Service Bus only, owning Billing and Shipping
+#
+# The Booth router reaches the client database only as client-pi on the clientlan network, while the endpoints on the
+# host reach it on localhost:54321. Disconnecting the router from clientlan pulls the ClientUI Pi's cable (see REHEARSAL.md).
+name: booth-rehearsal
+
+x-router: &router
+  image: centralrouting-router:latest
+  restart: unless-stopped
+
+x-azure: &azure ${AzureServiceBus_ConnectionString:?Set AzureServiceBus_ConnectionString}
+
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  clientdb:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: rehearsal
+      POSTGRES_DB: booth
+    ports:
+      - "54321:5432"
+    networks:
+      default: {}
+      clientlan:
+        aliases: [client-pi]
+
+  routerdb:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: rehearsal
+      POSTGRES_DB: router
+
+  booth-router:
+    <<: *router
+    ports:
+      - "5095:8080"
+    environment:
+      Router__Name: BoothRouter
+      Router__HeartbeatInterval: "00:00:10"
+      Router__PeerHeartbeatInterval: "00:00:30"
+      Router__InterfaceReconnectInterval: "00:00:05"
+      Router__Storage__Type: PostgreSql
+      Router__Storage__ConnectionString: Host=routerdb;Database=router;Username=postgres;Password=rehearsal
+      Router__Interfaces__booth__Type: RabbitMQ
+      Router__Interfaces__booth__ConnectionString: host=rabbitmq
+      Router__Interfaces__booth__Site: booth
+      Router__Interfaces__booth__SiteIdentities__0: booth
+      Router__Interfaces__client__Type: PostgreSql
+      Router__Interfaces__client__ConnectionString: Host=client-pi;Database=booth;Username=postgres;Password=rehearsal;Timeout=5
+      Router__Interfaces__client__Site: client
+      Router__Interfaces__client__SiteIdentities__0: client
+      Router__Interfaces__azure__Type: AzureServiceBus
+      Router__Interfaces__azure__ConnectionString: *azure
+      Router__Interfaces__azure__Site: azure
+      Router__Peers__CloudRouter__Interface: azure
+    networks:
+      default: {}
+      clientlan: {}
+    # Not on clientdb: the router has to start while the client Pi is unreachable
+    depends_on: [rabbitmq, routerdb]
+
+  cloud-router:
+    <<: *router
+    ports:
+      - "5096:8080"
+    environment:
+      Router__Name: CloudRouter
+      Router__HeartbeatInterval: "00:00:10"
+      Router__PeerHeartbeatInterval: "00:00:30"
+      Router__Interfaces__azure__Type: AzureServiceBus
+      Router__Interfaces__azure__ConnectionString: *azure
+      Router__Interfaces__azure__Site: azure
+      Router__Peers__BoothRouter__Interface: azure
+
+networks:
+  clientlan:
+    internal: true
