@@ -4,8 +4,8 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <Authors>Szymon Pobiega</Authors>
-    <PackageProjectUrl>https://github.com/SzymonPobiega/CentralizedRouting</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/SzymonPobiega/CentralizedRouting.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/SzymonPobiega/NServiceBus.Community.Routing</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SzymonPobiega/NServiceBus.Community.Routing.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
