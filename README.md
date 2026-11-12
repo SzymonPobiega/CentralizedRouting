@@ -6,17 +6,17 @@ Implementation of the [design document](https://claude.ai/artifact/XTZmvdT2MGaFq
 
 | Project | Purpose |
 | --- | --- |
-| `CentralRouting.Model` | Routing document, control messages, headers and the `AddressResolver` that endpoints and routers both use to apply address policies |
-| `CentralRouting.Router` | The router: raw transport interfaces, control message handling, forwarding and its pipeline, peering, routing model, HTTP API, store abstraction and an in-memory store |
-| `CentralRouting.Router.EntityFramework` | EF Core store. Endpoints and routes are stored as JSON documents with optimistic concurrency |
-| `CentralRouting.Router.SqlServer` / `.PostgreSql` | `UseSqlServerStorage(...)` / `UsePostgreSqlStorage(...)` |
-| `CentralRouting.Router.Host` | A router configured from settings and environment variables, published as a container image |
-| `CentralRouting.Cli` | `routing` command line tool for the router API |
-| `CentralRouting.NServiceBus` | Endpoint plugin and the configuration provider that fetches and caches the routing document |
-| `CentralRouting.Tests` | Unit tests for address policies, the capability model and the store contract |
-| `CentralRouting.AcceptanceTests` | End-to-end tests: one router, two learning-transport sites, real endpoints |
-| `Rehearsal/Booth` | The conference booth demo's sites and routers in Docker, with scripts for its failure scenarios. Not part of `CentralRouting.sln` |
-| `Samples` | One folder per deployment topology, each with its own solution, routers, endpoints, messages and walkthrough. Not part of `CentralRouting.sln` |
+| `NServiceBus.Community.Routing.Model` | Routing document, control messages, headers and the `AddressResolver` that endpoints and routers both use to apply address policies |
+| `NServiceBus.Community.Routing.Router` | The router: raw transport interfaces, control message handling, forwarding and its pipeline, peering, routing model, HTTP API, store abstraction and an in-memory store |
+| `NServiceBus.Community.Routing.Router.EntityFramework` | EF Core store. Endpoints and routes are stored as JSON documents with optimistic concurrency |
+| `NServiceBus.Community.Routing.Router.SqlServer` / `.PostgreSql` | `UseSqlServerStorage(...)` / `UsePostgreSqlStorage(...)` |
+| `NServiceBus.Community.Routing.Router.Host` | A router configured from settings and environment variables, published as a container image |
+| `NServiceBus.Community.Routing.Cli` | `routing` command line tool for the router API |
+| `NServiceBus.Community.Routing` | Endpoint plugin and the configuration provider that fetches and caches the routing document |
+| `NServiceBus.Community.Routing.Tests` | Unit tests for address policies, the capability model and the store contract |
+| `NServiceBus.Community.Routing.AcceptanceTests` | End-to-end tests: one router, two learning-transport sites, real endpoints |
+| `Rehearsal/Booth` | The conference booth demo's sites and routers in Docker, with scripts for its failure scenarios. Not part of `NServiceBus.Community.Routing.sln` |
+| `Samples` | One folder per deployment topology, each with its own solution, routers, endpoints, messages and walkthrough. Not part of `NServiceBus.Community.Routing.sln` |
 
 ## Router
 
@@ -84,7 +84,7 @@ class MyBehavior : IForwardingBehavior
 
 `context.GetDispatchTransaction(site)` is the transaction each site's messages are dispatched with, so a behavior can put a connection and transaction in it and commit after `next`.
 
-`CentralRouting.Router.SqlServer` has one such behavior. It forwards each message into a SQL Server transport site at most once, which keeps that site's exactly-once processing when messages reach it over an at-least-once transport such as a backplane:
+`NServiceBus.Community.Routing.Router.SqlServer` has one such behavior. It forwards each message into a SQL Server transport site at most once, which keeps that site's exactly-once processing when messages reach it over an at-least-once transport such as a backplane:
 
 ```csharp
 router.AddSqlServerDeduplication("billing", connectionString);   // table dbo.RouterDeduplication (MessageId, InsertedAt), created on first use
@@ -96,7 +96,7 @@ Storage goes through `IRouterStore`. It works with whole documents (an endpoint 
 
 ## Router container
 
-`CentralRouting.Router.Host` is a ready-made router configured without code, and the image CI pushes to `ghcr.io/szymonpobiega/centralrouting-router`, for linux-x64 and linux-arm64 (such as a Raspberry Pi). It includes the SQL Server, PostgreSQL, RabbitMQ, Azure Service Bus and learning transports. Settings are read from the `Router` section of `appsettings.json`, from environment variables (levels separated by `__`), or from secret files: each file in `/run/secrets` (or `SecretsDirectory`) is one setting named like the environment variable, such as `Router__Storage__ConnectionString`.
+`NServiceBus.Community.Routing.Router.Host` is a ready-made router configured without code, and the image CI pushes to `ghcr.io/szymonpobiega/nservicebus-community-router`, for linux-x64 and linux-arm64 (such as a Raspberry Pi). It includes the SQL Server, PostgreSQL, RabbitMQ, Azure Service Bus and learning transports. Settings are read from the `Router` section of `appsettings.json`, from environment variables (levels separated by `__`), or from secret files: each file in `/run/secrets` (or `SecretsDirectory`) is one setting named like the environment variable, such as `Router__Storage__ConnectionString`.
 
 ```bash
 docker run -p 8080:8080 \
@@ -110,7 +110,7 @@ docker run -p 8080:8080 \
   -e Router__Interfaces__hq__ConnectionString="Endpoint=sb://..." \
   -e Router__Interfaces__hq__Site=hq \
   -e Router__Peers__HQ__Interface=hq \
-  ghcr.io/szymonpobiega/centralrouting-router
+  ghcr.io/szymonpobiega/nservicebus-community-router
 ```
 
 | Setting | Values |
@@ -132,7 +132,7 @@ The router stops at startup with a list of every invalid setting. The API and `/
 
 ## Command line tool
 
-`CentralRouting.Cli` calls the router API and formats the results with Spectre.Console. It packs as a .NET tool named `routing`; during development run it with `dotnet run --project CentralRouting.Cli -- <command>`.
+`NServiceBus.Community.Routing.Cli` calls the router API and formats the results with Spectre.Console. It packs as a .NET tool named `routing`; during development run it with `dotnet run --project NServiceBus.Community.Routing.Cli -- <command>`.
 
 ```
 routing status                                              # sites, endpoints, routes by validation status, peers
@@ -209,7 +209,7 @@ dotnet build
 dotnet test
 ```
 
-Every build of a library project, and of the CLI, also creates its NuGet package in `artifacts/packages`. The version comes from the latest `v*` git tag through MinVer: a tagged commit gets that version (`v0.2.0` → `0.2.0`), later commits a pre-release of the next patch, and a repository with no tags `0.0.0-alpha.0`. GitHub Actions (`.github/workflows/ci.yml`) builds, tests against a SQL Server container, builds the samples, and uploads the packages as an artifact. It then builds the router image and, on `master` and tags, pushes it to ghcr.io. To build the image locally: `dotnet publish CentralRouting.Router.Host -c Release -t:PublishContainer` (needs Docker, or add `-p:ContainerArchiveOutputPath=router.tar.gz`).
+Every build of a library project, and of the CLI, also creates its NuGet package in `artifacts/packages`. The version comes from the latest `v*` git tag through MinVer: a tagged commit gets that version (`v0.2.0` → `0.2.0`), later commits a pre-release of the next patch, and a repository with no tags `0.0.0-alpha.0`. GitHub Actions (`.github/workflows/ci.yml`) builds, tests against a SQL Server container, builds the samples, and uploads the packages as an artifact. It then builds the router image and, on `master` and tags, pushes it to ghcr.io. To build the image locally: `dotnet publish NServiceBus.Community.Routing.Router.Host -c Release -t:PublishContainer` (needs Docker, or add `-p:ContainerArchiveOutputPath=router.tar.gz`).
 
 Tests that use SQL Server connect to the local default instance with integrated security. Override the connection string with the `CentralRouting_SqlServer_ConnectionString` environment variable. Tests are ignored when SQL Server is not reachable.
 

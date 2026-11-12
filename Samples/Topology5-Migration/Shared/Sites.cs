@@ -1,5 +1,5 @@
 using System;
-using CentralRouting.Model;
+using NServiceBus.Community.Routing.Model;
 using NServiceBus;
 
 /// <summary>

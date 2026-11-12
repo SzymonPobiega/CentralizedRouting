@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\CentralRouting.NServiceBus\CentralRouting.NServiceBus.csproj" />
+    <ProjectReference Include="..\..\..\NServiceBus.Community.Routing\NServiceBus.Community.Routing.csproj" />
     <ProjectReference Include="..\Messages\Topology4.Messages.csproj" />
   </ItemGroup>
 

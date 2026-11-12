@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using CentralRouting.Router;
+using NServiceBus.Community.Routing.Router;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

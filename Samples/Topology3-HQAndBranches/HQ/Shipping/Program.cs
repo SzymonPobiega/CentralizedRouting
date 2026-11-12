@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using CentralRouting.NServiceBus;
+using NServiceBus.Community.Routing;
 using Messages;
 using Microsoft.Extensions.Hosting;
 using NServiceBus;

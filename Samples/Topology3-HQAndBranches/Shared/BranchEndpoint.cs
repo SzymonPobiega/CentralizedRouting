@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using CentralRouting.NServiceBus;
+using NServiceBus.Community.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

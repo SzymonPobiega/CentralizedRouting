@@ -41,19 +41,19 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore CentralRouting.sln
+        run: dotnet restore NServiceBus.Community.Routing.sln
 
       - name: Build and pack
-        run: dotnet build CentralRouting.sln --configuration Release --no-restore
+        run: dotnet build NServiceBus.Community.Routing.sln --configuration Release --no-restore
 
       # Separate databases: the store tests drop and recreate theirs
       - name: Unit tests
-        run: dotnet test CentralRouting.Tests/CentralRouting.Tests.csproj --configuration Release --no-build --logger trx --results-directory TestResults
+        run: dotnet test NServiceBus.Community.Routing.Tests/NServiceBus.Community.Routing.Tests.csproj --configuration Release --no-build --logger trx --results-directory TestResults
         env:
           CentralRouting_SqlServer_ConnectionString: Server=localhost,1433;Database=CentralRoutingStoreTests;User Id=sa;Password=${{ env.SQL_PASSWORD }};TrustServerCertificate=true
 
       - name: Acceptance tests
-        run: dotnet test CentralRouting.AcceptanceTests/CentralRouting.AcceptanceTests.csproj --configuration Release --no-build --logger trx --results-directory TestResults
+        run: dotnet test NServiceBus.Community.Routing.AcceptanceTests/NServiceBus.Community.Routing.AcceptanceTests.csproj --configuration Release --no-build --logger trx --results-directory TestResults
         env:
           CentralRouting_SqlServer_ConnectionString: Server=localhost,1433;Database=CentralRoutingTests;User Id=sa;Password=${{ env.SQL_PASSWORD }};TrustServerCertificate=true
 
@@ -103,11 +103,11 @@ jobs:
 
       - name: Build image
         if: github.event_name == 'pull_request'
-        run: dotnet publish CentralRouting.Router.Host --configuration Release -t:PublishContainer -p:ContainerArchiveOutputPath=$RUNNER_TEMP/centralrouting-router.tar.gz
+        run: dotnet publish NServiceBus.Community.Routing.Router.Host --configuration Release -t:PublishContainer -p:ContainerArchiveOutputPath=$RUNNER_TEMP/nservicebus-community-router.tar.gz
 
       - name: Build and push image
         if: github.event_name != 'pull_request'
         run: |
-          dotnet publish CentralRouting.Router.Host --configuration Release -t:PublishContainer \
+          dotnet publish NServiceBus.Community.Routing.Router.Host --configuration Release -t:PublishContainer \
             -p:ContainerRegistry=ghcr.io \
-            -p:ContainerRepository=${GITHUB_REPOSITORY_OWNER,,}/centralrouting-router
+            -p:ContainerRepository=${GITHUB_REPOSITORY_OWNER,,}/nservicebus-community-router

@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\CentralRouting.Router.SqlServer\CentralRouting.Router.SqlServer.csproj" />
+    <ProjectReference Include="..\..\..\..\NServiceBus.Community.Routing.Router.SqlServer\NServiceBus.Community.Routing.Router.SqlServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

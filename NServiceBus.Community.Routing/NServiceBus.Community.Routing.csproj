@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <Description>NServiceBus endpoint plugin for central routing: capability reports and routing from the router's routing document.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus" Version="10.2.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NServiceBus.Community.Routing.Model\NServiceBus.Community.Routing.Model.csproj" />
+  </ItemGroup>
+
+</Project>

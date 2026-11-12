@@ -1,5 +1,5 @@
-using CentralRouting.Model;
-using CentralRouting.NServiceBus;
+using NServiceBus.Community.Routing.Model;
+using NServiceBus.Community.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

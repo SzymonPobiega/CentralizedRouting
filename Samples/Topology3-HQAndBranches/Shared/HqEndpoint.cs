@@ -1,5 +1,5 @@
 using System;
-using CentralRouting.NServiceBus;
+using NServiceBus.Community.Routing;
 using Microsoft.Extensions.Hosting;
 
 static class HqEndpoint

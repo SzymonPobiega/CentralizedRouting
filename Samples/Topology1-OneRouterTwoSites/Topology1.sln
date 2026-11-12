@@ -5,19 +5,19 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology1.Billing", "Billing\Topology1.Billing.csproj", "{D0C49739-C202-46D0-9B6D-CF28E0EE780A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralRouting.NServiceBus", "..\..\CentralRouting.NServiceBus\CentralRouting.NServiceBus.csproj", "{B6573A6C-7682-44CA-AF45-6332903ED1E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Community.Routing", "..\..\NServiceBus.Community.Routing\NServiceBus.Community.Routing.csproj", "{B6573A6C-7682-44CA-AF45-6332903ED1E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralRouting.Model", "..\..\CentralRouting.Model\CentralRouting.Model.csproj", "{DC9F0903-BA21-49EE-AB49-D7AAB3AC430E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Community.Routing.Model", "..\..\NServiceBus.Community.Routing.Model\NServiceBus.Community.Routing.Model.csproj", "{DC9F0903-BA21-49EE-AB49-D7AAB3AC430E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology1.Messages", "Messages\Topology1.Messages.csproj", "{F3FCD7DC-DEA2-4119-AA63-9C4A89A1A467}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology1.Router", "Router\Topology1.Router.csproj", "{FDADFA64-D441-4569-A716-EB9C66AC0A6F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralRouting.Router.SqlServer", "..\..\CentralRouting.Router.SqlServer\CentralRouting.Router.SqlServer.csproj", "{3E9BF178-02F0-4235-9577-3DC753C5496E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Community.Routing.Router.SqlServer", "..\..\NServiceBus.Community.Routing.Router.SqlServer\NServiceBus.Community.Routing.Router.SqlServer.csproj", "{3E9BF178-02F0-4235-9577-3DC753C5496E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralRouting.Router.EntityFramework", "..\..\CentralRouting.Router.EntityFramework\CentralRouting.Router.EntityFramework.csproj", "{C8D4B1C2-D404-43AB-A4A9-B1A3DB16E70B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Community.Routing.Router.EntityFramework", "..\..\NServiceBus.Community.Routing.Router.EntityFramework\NServiceBus.Community.Routing.Router.EntityFramework.csproj", "{C8D4B1C2-D404-43AB-A4A9-B1A3DB16E70B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralRouting.Router", "..\..\CentralRouting.Router\CentralRouting.Router.csproj", "{67593027-6B50-45C4-85FA-6BBB5670FC9D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Community.Routing.Router", "..\..\NServiceBus.Community.Routing.Router\NServiceBus.Community.Routing.Router.csproj", "{67593027-6B50-45C4-85FA-6BBB5670FC9D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology1.Sales", "Sales\Topology1.Sales.csproj", "{4C065CE4-FE7F-415F-9693-A29D767D7774}"
 EndProject
@@ -27,7 +27,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Topology1.Website", "Websit
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CentralRouting", "CentralRouting", "{BC437CF5-103B-4EFC-96E4-5B0E7B43A970}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CentralRouting.Cli", "..\..\CentralRouting.Cli\CentralRouting.Cli.csproj", "{4B928D4B-7825-44B9-96B6-8EADDA5D3B62}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Community.Routing.Cli", "..\..\NServiceBus.Community.Routing.Cli\NServiceBus.Community.Routing.Cli.csproj", "{4B928D4B-7825-44B9-96B6-8EADDA5D3B62}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

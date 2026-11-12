@@ -11,7 +11,7 @@
 name: booth-rehearsal
 
 x-router: &router
-  image: centralrouting-router:latest
+  image: nservicebus-community-router:latest
   restart: unless-stopped
 
 x-azure: &azure ${AzureServiceBus_ConnectionString:?Set AzureServiceBus_ConnectionString}

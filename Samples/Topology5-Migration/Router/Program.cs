@@ -1,5 +1,5 @@
 using System;
-using CentralRouting.Router;
+using NServiceBus.Community.Routing.Router;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;

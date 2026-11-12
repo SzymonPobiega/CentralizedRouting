@@ -13,10 +13,10 @@ $root = [IO.Path]::GetFullPath("$PSScriptRoot\..\..")
 
 if (-not $NoBuild) {
     # Docker without the containerd image store loads only single-platform images
-    dotnet publish "$root\CentralRouting.Router.Host" -c Release -r linux-x64 -t:PublishContainer -p:ContainerRuntimeIdentifiers= -nologo -v q
+    dotnet publish "$root\NServiceBus.Community.Routing.Router.Host" -c Release -r linux-x64 -t:PublishContainer -p:ContainerRuntimeIdentifiers= -nologo -v q
     if ($LASTEXITCODE) { throw 'Building the router image failed.' }
     dotnet build "$PSScriptRoot\Endpoints" -nologo -v q
-    dotnet build "$root\CentralRouting.Cli" -nologo -v q
+    dotnet build "$root\NServiceBus.Community.Routing.Cli" -nologo -v q
     if ($LASTEXITCODE) { throw 'The build failed.' }
 }
 

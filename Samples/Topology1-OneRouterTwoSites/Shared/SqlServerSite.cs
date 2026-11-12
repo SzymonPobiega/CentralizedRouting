@@ -1,5 +1,5 @@
 using System;
-using CentralRouting.Model;
+using NServiceBus.Community.Routing.Model;
 using Microsoft.Data.SqlClient;
 using NServiceBus;
 
